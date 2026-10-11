@@ -1,0 +1,35 @@
+📌 EURUSD EXECUTION RULES & SESSION CHEATSHEET
+==================================================
+
+🎯 SETUP: DUAL-ENTRY CONSOLIDATION BREAKOUT
+--------------------------------------------------
+• E1 (Standard TP): 1:4.00 (Bank 70-80% position, move SL to Breakeven)
+• E2 (Moonshot Runner): 1:9.00 (Leave 20-30% runner for full expansion)
+• Risk Cap: Max 2.5% per leg (5.0% total per setup)
+
+🕒 TIMING & SESSION FILTERS (CRITICAL)
+--------------------------------------------------
+✅ PRIME TIME (HIGH EXPANSION):
+   • London Open & Session (07:00 - 11:00 UTC)
+   • London/NY Overlap (12:30 - 16:30 UTC)
+   -> 85% of winning 1:4 and 1:9 moves occur during these hours.
+
+⛔ THE "MIDDAY LUNCH" DEAD ZONE (DO NOT ENTER):
+   • 11:00 - 12:30 UTC (London Lunch / Pre-NY Open)
+   -> Setups form fake breakouts that stall and reverse. Wait for NY Open!
+
+⛔ NO NIGHT TRADING:
+   • Strictly NO entries after midnight / late US session (Post-21:00 UTC / Asian Session).
+   • Spreads widen, volume drops, setups fail to fulfill targets.
+
+🛡️ DAILY DISCIPLINE RULES
+--------------------------------------------------
+1. MAX 2 TRADES PER DAY:
+   • Win or lose, after 2 setups are executed, close the charts.
+   • Eliminates revenge trading, fatigue, and overtrading.
+2. DOWNSIDE BIAS ON RUNNERS:
+   • Shorts complete 1:9 runners 33.3% of the time (liquidation momentum).
+   • On Longs, always take profit at 1:4 (runners stall 77% of the time).
+3. HARD RULE ON OVERSIZING:
+   • Never exceed fixed risk. If oversized by mistake, exit immediately at BE/first tick.
+==================================================

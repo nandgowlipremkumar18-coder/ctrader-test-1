@@ -1,0 +1,823 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Neon Strict Fib Backtester - Dual Entry Edition</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&display=swap');
+        
+        :root { 
+            --bg-color: #050505; 
+            --surface: #111; 
+            --primary: #ff0055; 
+            --primary-glow: 0 0 10px #ff0055, 0 0 20px #ff0055;
+            --text: #555; 
+            
+            --neon-green: #0f0;
+            --neon-green-glow: 0 0 10px #0f0, 0 0 20px #0f0;
+            --neon-orange: #ff9900;
+            --neon-orange-glow: 0 0 10px #ff9900, 0 0 20px #ff9900;
+            --neon-red: #ff0000;
+            --neon-red-glow: 0 0 10px #ff0000, 0 0 20px #ff0000;
+            --neon-yellow: #ffff00;
+            --neon-yellow-glow: 0 0 10px #ffff00, 0 0 20px #ffff00;
+            --neon-teal: #00ffff;
+            --neon-teal-glow: 0 0 10px #00ffff, 0 0 20px #00ffff;
+        }
+        body { font-family: 'Orbitron', sans-serif; background-color: var(--bg-color); color: #fff; margin: 0; padding: 15px; display: flex; flex-direction: column; align-items: center; }
+        h1 { color: #fff; text-shadow: var(--primary-glow); text-transform: uppercase; letter-spacing: 3px; text-align: center; margin: 10px 0 20px 0; font-size: 28px; font-weight: 900; }
+        
+        .page-wrapper { display: flex; gap: 20px; width: 100%; max-width: 1800px; align-items: flex-start; flex-wrap: wrap; justify-content: center; }
+        .left-panel { display: flex; gap: 20px; flex: 1; min-width: 700px; max-width: 850px; }
+        .controls-col { flex: 1; background: var(--surface); padding: 25px; border-radius: 12px; border: 1px solid #333; display: flex; flex-direction: column; gap: 20px; }
+        .fib-col { flex: 1; background: var(--surface); padding: 25px; border-radius: 12px; border: 1px solid #333; }
+        
+        label.section-title { display: block; margin-bottom: 10px; font-weight: 900; font-size: 15px; color: #888; text-transform: uppercase; text-align: center; letter-spacing: 1px; }
+        
+        .reentry-toggle { display: flex; justify-content: center; background: rgba(255,153,0,0.1); padding: 12px; border-radius: 8px; border: 1px dashed #ff9900; cursor: pointer; color: #ff9900; font-weight: bold; transition: 0.3s; font-size: 13px; text-align: center;}
+        .reentry-toggle:hover { background: rgba(255,153,0,0.2); }
+        .reentry-toggle.active { background: rgba(255,153,0,0.3); text-shadow: var(--neon-orange-glow); box-shadow: inset 0 0 10px #ff9900; border-color: transparent; }
+
+        .dual-entry-toggle { display: flex; justify-content: center; background: rgba(0,255,255,0.1); padding: 12px; border-radius: 8px; border: 1px dashed #00ffff; cursor: pointer; color: #00ffff; font-weight: bold; transition: 0.3s; font-size: 13px; text-align: center;}
+        .dual-entry-toggle:hover { background: rgba(0,255,255,0.2); }
+        .dual-entry-toggle.active-dual { background: rgba(0,255,255,0.3); text-shadow: var(--neon-teal-glow); box-shadow: inset 0 0 10px #00ffff; border-color: transparent; color: #fff; }
+        
+        /* Custom Neon Radio Buttons */
+        .radio-group { display: flex; gap: 10px; justify-content: center; width: 100%; }
+        .btn-radio { flex: 1; display: flex; }
+        .btn-radio input { display: none; }
+        .btn-radio span { flex: 1; text-align: center; padding: 10px 0; border: 2px solid #333; border-radius: 8px; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: 0.3s; font-size: 12px; font-weight: 900; text-transform: uppercase; color: #666; background: #1a1a1a; letter-spacing: 1px; box-sizing: border-box; }
+        
+        .btn-radio.upside span:hover { border-color: #050; color: #0a0; }
+        .btn-radio.downside span:hover { border-color: #500; color: #a00; }
+        
+        .btn-radio.upside input:checked + span { border-color: var(--neon-green); color: #fff; box-shadow: 0 0 15px var(--neon-green), inset 0 0 10px var(--neon-green); text-shadow: 0 0 5px #fff, var(--neon-green-glow); background: rgba(0,255,0,0.2); transform: scale(1.05); }
+        .btn-radio.downside input:checked + span { border-color: var(--neon-red); color: #fff; box-shadow: 0 0 15px var(--neon-red), inset 0 0 10px var(--neon-red); text-shadow: 0 0 5px #fff, var(--neon-red-glow); background: rgba(255,0,0,0.2); transform: scale(1.05); }
+        
+        .btn-radio.win input:checked + span { border-color: var(--neon-green); color: #fff; box-shadow: 0 0 15px var(--neon-green), inset 0 0 10px var(--neon-green); text-shadow: 0 0 5px #fff, var(--neon-green-glow); background: rgba(0,255,0,0.2); transform: scale(1.05); }
+        .btn-radio.loss input:checked + span { border-color: var(--neon-red); color: #fff; box-shadow: 0 0 15px var(--neon-red), inset 0 0 10px var(--neon-red); text-shadow: 0 0 5px #fff, var(--neon-red-glow); background: rgba(255,0,0,0.2); transform: scale(1.05); }
+        .btn-radio.be input:checked + span { border-color: var(--neon-yellow); color: #fff; box-shadow: 0 0 15px var(--neon-yellow), inset 0 0 10px var(--neon-yellow); text-shadow: 0 0 5px #fff, var(--neon-yellow-glow); background: rgba(255,255,0,0.2); transform: scale(1.05); }
+
+        /* Fib Chart Compact */
+        .fib-chart { display: flex; flex-direction: column; gap: 8px; background: #000; padding: 20px; border-radius: 8px; border: 1px solid #222; overflow: hidden; }
+        .fib-row { display: flex; justify-content: center; gap: 6px; width: 100%; transition: 0.3s; }
+        .fib-level { display: flex; align-items: center; justify-content: center; gap: 10px; padding: 4px 12px; border-radius: 6px; transition: 0.3s; position: relative; color: var(--text); border: 1px solid transparent; cursor: pointer; flex: 1; max-width: 350px; }
+        
+        .fib-level.green { color: #0a0; }
+        .fib-level.orange { color: #a60; }
+        .fib-level.red { color: #a00; }
+        .fib-level.yellow { color: #aa0; }
+        .fib-level.teal { color: #0aa; }
+        
+        .fib-level.showpiece { pointer-events: none; opacity: 0.5; }
+        .fib-level.disabled { pointer-events: none !important; opacity: 0.15 !important; }
+        
+        .fib-text { min-width: 50px; font-weight: bold; font-size: 15px; text-align: center; border: 2px solid #333; border-radius: 6px; padding: 6px 10px; transition: 0.3s; background: #111; pointer-events: none; }
+        
+        .fib-level.green.checked .fib-text { color: #fff; text-shadow: var(--neon-green-glow); border-color: var(--neon-green); box-shadow: 0 0 10px var(--neon-green), inset 0 0 10px var(--neon-green); background: rgba(0,255,0,0.2); transform: scale(1.1); }
+        .fib-level.orange.checked .fib-text { color: #fff; text-shadow: var(--neon-orange-glow); border-color: var(--neon-orange); box-shadow: 0 0 10px var(--neon-orange), inset 0 0 10px var(--neon-orange); background: rgba(255,153,0,0.2); transform: scale(1.1); }
+        .fib-level.red.checked .fib-text { color: #fff; text-shadow: var(--neon-red-glow); border-color: var(--neon-red); box-shadow: 0 0 10px var(--neon-red), inset 0 0 10px var(--neon-red); background: rgba(255,0,0,0.2); transform: scale(1.1); }
+        .fib-level.yellow.checked .fib-text { color: #fff; text-shadow: var(--neon-yellow-glow); border-color: var(--neon-yellow); box-shadow: 0 0 10px var(--neon-yellow), inset 0 0 10px var(--neon-yellow); background: rgba(255,255,0,0.2); transform: scale(1.1); }
+        .fib-level.teal.checked .fib-text { color: #fff; text-shadow: var(--neon-teal-glow); border-color: var(--neon-teal); box-shadow: 0 0 10px var(--neon-teal), inset 0 0 10px var(--neon-teal); background: rgba(0,255,255,0.2); transform: scale(1.1); }
+        
+        .fib-line { flex-grow: 1; height: 1px; border-bottom: 1px dashed currentcolor; opacity: 0.5; margin: 0 5px; pointer-events: none; }
+        .fib-desc { font-size: 11px; width: 140px; text-transform: uppercase; pointer-events: none; font-weight: bold; text-align: right; margin-right: 10px; transition: 0.3s; }
+        
+        /* Dual Track Overrides */
+        .neon-dual-active .fib-desc { position: absolute; right: 100%; top: 50%; transform: translateY(-50%); width: 100px; padding-right: 15px; }
+        .neon-dual-active .fib-level[data-side="down"] .fib-desc { right: auto; left: calc(200% + 15px); padding-right: 0; padding-left: 15px; text-align: left; }
+        .neon-dual-active .fib-line { display: none; }
+        
+        input[type="checkbox"].fib-cb { display: none; }
+        
+        button.submit-btn { width: 100%; padding: 20px; background: transparent; color: var(--primary); border: 2px solid var(--primary); border-radius: 8px; font-size: 18px; font-weight: 900; font-family: 'Orbitron', sans-serif; cursor: pointer; text-transform: uppercase; transition: 0.3s; margin-top: auto; text-shadow: var(--primary-glow); box-shadow: inset 0 0 15px var(--primary); letter-spacing: 2px; }
+        button.submit-btn:hover { background: var(--primary); color: #fff; box-shadow: 0 0 30px var(--primary); text-shadow: none; }
+        
+        button.export-btn { width: 100%; padding: 15px; background: #000; color: #00f0ff; border: 2px solid #00f0ff; border-radius: 8px; font-size: 14px; font-weight: bold; font-family: 'Orbitron', sans-serif; cursor: pointer; text-transform: uppercase; transition: 0.3s; margin-top: 10px; text-shadow: 0 0 10px #00f0ff; box-shadow: inset 0 0 15px #00f0ff, 0 0 25px #00f0ff; letter-spacing: 2px; }
+        button.export-btn:hover { background: #00f0ff; color: #000; box-shadow: 0 0 40px #00f0ff; text-shadow: none; }
+        
+        button.clear-btn { width: 100%; padding: 10px; background: #200; color: #f00; border: 2px dashed #f00; border-radius: 8px; font-size: 12px; font-weight: bold; font-family: 'Orbitron'; cursor: pointer; text-transform: uppercase; margin-top: 10px; transition: 0.3s; }
+        button.clear-btn:hover { background: #f00; color: #fff; border-style: solid; box-shadow: 0 0 20px #f00; }
+
+        .log-container { flex: 1.5; min-width: 500px; background: var(--surface); padding: 20px; border-radius: 12px; border: 1px solid #333; max-height: 85vh; overflow-y: auto; }
+        table { width: 100%; border-collapse: collapse; }
+        th, td { padding: 10px; text-align: left; border-bottom: 1px solid #222; }
+        th { color: #fff; font-size: 11px; text-transform: uppercase; letter-spacing: 1px; position: sticky; top: 0; background: var(--surface); z-index: 1; }
+        td { font-size: 12px; color: #ddd; font-weight: bold; }
+        .win { color: #0f0; text-shadow: 0 0 5px #0f0; }
+        .loss { color: #f00; text-shadow: 0 0 5px #f00; }
+        .delete-btn { background: transparent; color: #888; border: 1px solid #888; padding: 4px 8px; font-size: 10px; border-radius: 4px; cursor: pointer; font-family: 'Orbitron'; }
+        .delete-btn:hover { background: #f00; color: white; border-color: #f00; box-shadow: 0 0 10px #f00; }
+        .badge { background: rgba(255,153,0,0.2); color: #ff9900; border: 1px solid #ff9900; padding: 2px 4px; border-radius: 3px; font-size: 9px; margin-left: 5px; }
+        .badge-green { background: rgba(0,255,0,0.2); color: #0f0; border: 1px solid #0f0; padding: 2px 4px; border-radius: 3px; font-size: 9px; margin-left: 5px; }
+        .badge-red { background: rgba(255,0,0,0.2); color: #f00; border: 1px solid #f00; padding: 2px 4px; border-radius: 3px; font-size: 9px; margin-left: 5px; }
+        .badge-dual { background: rgba(0,255,255,0.2); color: #0ff; border: 1px solid #0ff; padding: 2px 4px; border-radius: 3px; font-size: 9px; margin-left: 5px; }
+        .rr-badge { background: rgba(0,255,255,0.1); color: #0ff; border: 1px solid #0ff; padding: 3px 6px; border-radius: 4px; font-weight: bold; font-family: monospace; }
+        .money-green { color: #0f0; }
+        .money-red { color: #f00; }
+        
+        input#pair-input { width: 100%; box-sizing: border-box; padding: 12px; background: #1a1a1a; border: 2px solid #333; color: #fff; font-family: 'Orbitron'; font-size: 16px; border-radius: 8px; text-align: center; font-weight: bold; text-transform: uppercase; transition: 0.3s; }
+        input#pair-input:focus { border-color: var(--primary); outline: none; box-shadow: inset 0 0 10px var(--primary); }
+    </style>
+</head>
+<body>
+
+    <h1>Neon Fib Backtester</h1>
+    
+    <div class="page-wrapper">
+        <div class="left-panel">
+        
+        <!-- Left Column: Controls -->
+        <div class="controls-col">
+            <label class="reentry-toggle" id="reentry-btn">
+                <input type="checkbox" id="reentry-cb" style="display:none;" onchange="handleReentryChange()"> 
+                [+] PAST TRADE CONTINUE (MAX STOP RE-ENTRY)
+            </label>
+            
+            <label class="dual-entry-toggle" id="dual-entry-btn">
+                <input type="checkbox" id="dual-entry-cb" style="display:none;" onchange="handleDualEntryChange()"> 
+                [⚡] ENABLE DUAL ENTRY (50/50 SCALE OUT)
+            </label>
+            
+            <div>
+                <label class="section-title">Asset Pair</label>
+                <input type="text" id="pair-input" value="XAUUSD">
+            </div>
+
+            <div>
+                <label class="section-title">Total Risk Per Setup (%)</label>
+                <input type="number" id="risk-input" value="5" step="1" onchange="renderLogs()" style="width: 100%; box-sizing: border-box; padding: 12px; background: #1a1a1a; border: 2px solid #333; color: #fff; font-family: 'Orbitron'; font-size: 16px; border-radius: 8px; text-align: center; font-weight: bold;">
+                <div style="text-align: center; font-size: 10px; color: #888; margin-top: 5px;">Dual Entry automatically splits this risk in half (2.5% per entry)</div>
+            </div>
+
+            <div>
+                <label class="section-title">Trade Direction</label>
+                <div class="radio-group">
+                    <label class="btn-radio upside">
+                        <input type="radio" name="direction" value="Upside" checked onchange="handleDirectionChange()">
+                        <span>Upside (Buy)</span>
+                    </label>
+                    <label class="btn-radio downside">
+                        <input type="radio" name="direction" value="Downside" onchange="handleDirectionChange()">
+                        <span>Downside (Sell)</span>
+                    </label>
+                </div>
+            </div>
+
+            <div>
+                <label class="section-title" id="entry1-title">Trade Result</label>
+                <div class="radio-group">
+                    <label class="btn-radio win">
+                        <input type="radio" name="result1" value="Win" checked onchange="handleResultChange()">
+                        <span>Win</span>
+                    </label>
+                    <label class="btn-radio loss">
+                        <input type="radio" name="result1" value="Loss" onchange="handleResultChange()">
+                        <span>Loss</span>
+                    </label>
+                    <label class="btn-radio be">
+                        <input type="radio" name="result1" value="Break Even" onchange="handleResultChange()">
+                        <span>Break Even</span>
+                    </label>
+                </div>
+            </div>
+
+            <div id="entry2-container" style="display: none; margin-top: 15px;">
+                <label class="section-title">Entry 2 Result (1:9 Runner)</label>
+                <div class="radio-group">
+                    <label class="btn-radio win">
+                        <input type="radio" name="result2" value="Win">
+                        <span>Win</span>
+                    </label>
+                    <label class="btn-radio loss">
+                        <input type="radio" name="result2" value="Loss">
+                        <span>Loss</span>
+                    </label>
+                    <label class="btn-radio be">
+                        <input type="radio" name="result2" value="Break Even" checked>
+                        <span>Break Even</span>
+                    </label>
+                </div>
+            </div>
+
+            <button class="submit-btn" onclick="submitTrade()">Log Trade To Journal</button>
+            <button class="export-btn" onclick="exportData()">📥 Export Data</button>
+            <button class="clear-btn" onclick="clearTrades()">⚠️ Wipe Journal</button>
+        </div>
+
+        <!-- Right Column: Fib Chart -->
+        <div class="fib-col">
+            <label class="section-title">Neon Path Tracker</label>
+            <div class="fib-chart" id="neon-tracker">
+                <div class="fib-row">
+                    <label class="fib-level e1 green" data-side="up" onmouseenter="startHoverTimer(this)" onmouseleave="cancelHoverTimer(this)"><div class="fib-desc"></div><div class="fib-line"></div><div class="fib-text">3.0</div><input type="checkbox" class="fib-cb e1-cb" value="3.0" onchange="handleTargetClick(this)"></label>
+                    <label class="fib-level e2 green" data-side="up" style="display:none;" onmouseenter="startHoverTimer(this)" onmouseleave="cancelHoverTimer(this)"><div class="fib-text">3.0</div><input type="checkbox" class="fib-cb e2-cb" value="3.0" onchange="handleTargetClick(this)"></label>
+                </div>
+                <div class="fib-row">
+                    <label class="fib-level e1 green" data-side="up" onmouseenter="startHoverTimer(this)" onmouseleave="cancelHoverTimer(this)"><div class="fib-desc">Upside Target</div><div class="fib-line"></div><div class="fib-text">2.5</div><input type="checkbox" class="fib-cb e1-cb" value="2.5" onchange="handleTargetClick(this)"></label>
+                    <label class="fib-level e2 green" data-side="up" style="display:none;" onmouseenter="startHoverTimer(this)" onmouseleave="cancelHoverTimer(this)"><div class="fib-text">2.5</div><input type="checkbox" class="fib-cb e2-cb" value="2.5" onchange="handleTargetClick(this)"></label>
+                </div>
+                <div class="fib-row">
+                    <label class="fib-level e1 green" data-side="up" onmouseenter="startHoverTimer(this)" onmouseleave="cancelHoverTimer(this)"><div class="fib-desc"></div><div class="fib-line"></div><div class="fib-text">2.25</div><input type="checkbox" class="fib-cb e1-cb" value="2.25" onchange="handleTargetClick(this)"></label>
+                    <label class="fib-level e2 green" data-side="up" style="display:none;" onmouseenter="startHoverTimer(this)" onmouseleave="cancelHoverTimer(this)"><div class="fib-text">2.25</div><input type="checkbox" class="fib-cb e2-cb" value="2.25" onchange="handleTargetClick(this)"></label>
+                </div>
+                <div class="fib-row">
+                    <label class="fib-level e1 teal" data-side="up"><div class="fib-desc">Upside Entry</div><div class="fib-line"></div><div class="fib-text">1.2</div><input type="checkbox" class="fib-cb e1-cb" value="1.2" id="entry-upside" onchange="toggleGlow(this)"></label>
+                    <label class="fib-level e2 teal" data-side="up" style="display:none;"><div class="fib-text">1.2</div><input type="checkbox" class="fib-cb e2-cb" value="1.2" id="entry-upside-e2" onchange="toggleGlow(this)"></label>
+                </div>
+                <div class="fib-row">
+                    <label class="fib-level e1 red" data-side="up" id="showpiece-1"><div class="fib-desc">Upside Stop (Tight)</div><div class="fib-line"></div><div class="fib-text">1.0</div><input type="checkbox" class="fib-cb e1-cb" value="1.0" onchange="handleStopLoss(this)"></label>
+                    <label class="fib-level e2 red" data-side="up" id="showpiece-1-e2" style="display:none;"><div class="fib-text">1.0</div><input type="checkbox" class="fib-cb e2-cb" value="1.0" onchange="handleStopLoss(this)"></label>
+                </div>
+                <div class="fib-row">
+                    <label class="fib-level e1 orange" data-side="up"><div class="fib-desc">Upside Stop</div><div class="fib-line"></div><div class="fib-text">0.75</div><input type="checkbox" class="fib-cb e1-cb" value="0.75" onchange="handleStopLoss(this)"></label>
+                    <label class="fib-level e2 orange" data-side="up" style="display:none;"><div class="fib-text">0.75</div><input type="checkbox" class="fib-cb e2-cb" value="0.75" onchange="handleStopLoss(this)"></label>
+                </div>
+                <div class="fib-row">
+                    <label class="fib-level e1 yellow" data-side="both" style="border: 1px dashed #550;"><div class="fib-desc">MAX STOP / Midline</div><div class="fib-line" style="border-bottom-style: solid;"></div><div class="fib-text">0.5</div><input type="checkbox" class="fib-cb e1-cb" value="0.5" onchange="handleStopLoss(this)"></label>
+                    <label class="fib-level e2 yellow" data-side="both" style="display:none; border: 1px dashed #550;"><div class="fib-text">0.5</div><input type="checkbox" class="fib-cb e2-cb" value="0.5" onchange="handleStopLoss(this)"></label>
+                </div>
+                <div class="fib-row">
+                    <label class="fib-level e1 orange" data-side="down"><div class="fib-desc">Downside Stop</div><div class="fib-line"></div><div class="fib-text">0.25</div><input type="checkbox" class="fib-cb e1-cb" value="0.25" onchange="handleStopLoss(this)"></label>
+                    <label class="fib-level e2 orange" data-side="down" style="display:none;"><div class="fib-text">0.25</div><input type="checkbox" class="fib-cb e2-cb" value="0.25" onchange="handleStopLoss(this)"></label>
+                </div>
+                <div class="fib-row">
+                    <label class="fib-level e1 red" data-side="down" id="showpiece-0"><div class="fib-desc">Downside Stop (Tight)</div><div class="fib-line"></div><div class="fib-text">0.0</div><input type="checkbox" class="fib-cb e1-cb" value="0.0" onchange="handleStopLoss(this)"></label>
+                    <label class="fib-level e2 red" data-side="down" id="showpiece-0-e2" style="display:none;"><div class="fib-text">0.0</div><input type="checkbox" class="fib-cb e2-cb" value="0.0" onchange="handleStopLoss(this)"></label>
+                </div>
+                <div class="fib-row">
+                    <label class="fib-level e1 teal" data-side="down"><div class="fib-desc">Downside Entry</div><div class="fib-line"></div><div class="fib-text">-0.2</div><input type="checkbox" class="fib-cb e1-cb" value="-0.2" id="entry-downside" onchange="toggleGlow(this)"></label>
+                    <label class="fib-level e2 teal" data-side="down" style="display:none;"><div class="fib-text">-0.2</div><input type="checkbox" class="fib-cb e2-cb" value="-0.2" id="entry-downside-e2" onchange="toggleGlow(this)"></label>
+                </div>
+                <div class="fib-row">
+                    <label class="fib-level e1 red" data-side="down" onmouseenter="startHoverTimer(this)" onmouseleave="cancelHoverTimer(this)"><div class="fib-desc"></div><div class="fib-line"></div><div class="fib-text">-1.25</div><input type="checkbox" class="fib-cb e1-cb" value="-1.25" onchange="handleTargetClick(this)"></label>
+                    <label class="fib-level e2 red" data-side="down" style="display:none;" onmouseenter="startHoverTimer(this)" onmouseleave="cancelHoverTimer(this)"><div class="fib-text">-1.25</div><input type="checkbox" class="fib-cb e2-cb" value="-1.25" onchange="handleTargetClick(this)"></label>
+                </div>
+                <div class="fib-row">
+                    <label class="fib-level e1 red" data-side="down" onmouseenter="startHoverTimer(this)" onmouseleave="cancelHoverTimer(this)"><div class="fib-desc">Downside Target</div><div class="fib-line"></div><div class="fib-text">-1.5</div><input type="checkbox" class="fib-cb e1-cb" value="-1.5" onchange="handleTargetClick(this)"></label>
+                    <label class="fib-level e2 red" data-side="down" style="display:none;" onmouseenter="startHoverTimer(this)" onmouseleave="cancelHoverTimer(this)"><div class="fib-text">-1.5</div><input type="checkbox" class="fib-cb e2-cb" value="-1.5" onchange="handleTargetClick(this)"></label>
+                </div>
+                <div class="fib-row">
+                    <label class="fib-level e1 red" data-side="down" onmouseenter="startHoverTimer(this)" onmouseleave="cancelHoverTimer(this)"><div class="fib-desc"></div><div class="fib-line"></div><div class="fib-text">-2.0</div><input type="checkbox" class="fib-cb e1-cb" value="-2.0" onchange="handleTargetClick(this)"></label>
+                    <label class="fib-level e2 red" data-side="down" style="display:none;" onmouseenter="startHoverTimer(this)" onmouseleave="cancelHoverTimer(this)"><div class="fib-text">-2.0</div><input type="checkbox" class="fib-cb e2-cb" value="-2.0" onchange="handleTargetClick(this)"></label>
+                </div>
+            </div>
+        </div>
+        </div>
+
+        <div class="log-container">
+        <table>
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>Pair</th>
+                    <th>Result</th>
+                    <th>R:R</th>
+                    <th>Risk ($)</th>
+                    <th>PnL ($)</th>
+                    <th>Balance ($)</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody id="log-table-body">
+            </tbody>
+        </table>
+    </div>
+    </div>
+
+    <script>
+        let tradeLogs = JSON.parse(localStorage.getItem('neonFibTrades')) || [];
+
+        window.onload = function() {
+            handleDualEntryChange();
+            handleDirectionChange();
+        };
+
+        function handleDualEntryChange() {
+            const cb = document.getElementById('dual-entry-cb');
+            const btn = document.getElementById('dual-entry-btn');
+            const e2Container = document.getElementById('entry2-container');
+            const e1Title = document.getElementById('entry1-title');
+            
+            if(cb.checked) {
+                btn.classList.add('active-dual');
+                e2Container.style.display = 'block';
+                e1Title.textContent = "Entry 1 Result (1:3 Target)";
+                document.getElementById('neon-tracker').classList.add('neon-dual-active');
+                document.querySelectorAll('.fib-level.e2').forEach(btn => btn.style.display = 'flex');
+                
+                const direction = document.querySelector('input[name="direction"]:checked').value;
+                if (direction === 'Upside') {
+                    let e2Entry = document.querySelector('input.e2-cb[value="1.2"]');
+                    let e2Stop = document.querySelector('input.e2-cb[value="1.0"]');
+                    let e2Target = document.querySelector('input.e2-cb[value="3.0"]');
+                    if(e2Entry) { e2Entry.checked = true; toggleGlow(e2Entry); }
+                    if(e2Stop) { e2Stop.checked = true; toggleGlow(e2Stop); }
+                    if(e2Target) { e2Target.checked = true; toggleGlow(e2Target); }
+                } else {
+                    let e2Entry = document.querySelector('input.e2-cb[value="-0.2"]');
+                    let e2Stop = document.querySelector('input.e2-cb[value="0.0"]');
+                    let e2Target = document.querySelector('input.e2-cb[value="-2.0"]');
+                    if(e2Entry) { e2Entry.checked = true; toggleGlow(e2Entry); }
+                    if(e2Stop) { e2Stop.checked = true; toggleGlow(e2Stop); }
+                    if(e2Target) { e2Target.checked = true; toggleGlow(e2Target); }
+                }
+            } else {
+                btn.classList.remove('active-dual');
+                e2Container.style.display = 'none';
+                e1Title.textContent = "Trade Result";
+                document.getElementById('neon-tracker').classList.remove('neon-dual-active');
+                document.querySelectorAll('.fib-level.e2').forEach(btn => {
+                    btn.style.display = 'none';
+                    let inp = btn.querySelector('input');
+                    if(inp) inp.checked = false;
+                    btn.classList.remove('checked');
+                });
+            }
+        }
+
+        function handleDirectionChange() {
+            const isReentry = document.getElementById('reentry-cb').checked;
+            if (isReentry) {
+                handleReentryChange();
+                return;
+            }
+
+            const direction = document.querySelector('input[name="direction"]:checked').value;
+            const upEntry = document.getElementById('entry-upside');
+            const downEntry = document.getElementById('entry-downside');
+            const showpiece1 = document.getElementById('showpiece-1');
+            const showpiece0 = document.getElementById('showpiece-0');
+            const upLevels = document.querySelectorAll('.fib-level[data-side="up"]');
+            const downLevels = document.querySelectorAll('.fib-level[data-side="down"]');
+            
+            if (direction === 'Upside') {
+                upLevels.forEach(el => el.classList.remove('disabled'));
+                downLevels.forEach(el => {
+                    el.classList.add('disabled');
+                    const cb = el.querySelector('.fib-cb');
+                    if (cb && cb.checked) { cb.checked = false; toggleGlow(cb); }
+                });
+                
+                upEntry.checked = true;
+                downEntry.checked = false;
+                showpiece1.classList.add('checked');
+                showpiece0.classList.remove('checked');
+            } else {
+                downLevels.forEach(el => el.classList.remove('disabled'));
+                upLevels.forEach(el => {
+                    el.classList.add('disabled');
+                    const cb = el.querySelector('.fib-cb');
+                    if (cb && cb.checked) { cb.checked = false; toggleGlow(cb); }
+                });
+                
+                upEntry.checked = false;
+                downEntry.checked = true;
+                showpiece1.classList.remove('checked');
+                showpiece0.classList.add('checked');
+            }
+            
+            toggleGlow(upEntry);
+            toggleGlow(downEntry);
+            
+            ['1.0', '0.75', '0.5', '0.25', '0.0'].forEach(val => {
+                let cb = document.querySelector('input.e1-cb[value="' + val + '"]') || document.querySelector('input.fib-cb[value="' + val + '"]');
+                if(cb) {
+                    cb.checked = false;
+                    toggleGlow(cb);
+                }
+            });
+            
+            if (direction === 'Upside') {
+                let stopCb = document.querySelector('input.e1-cb[value="0.75"]') || document.querySelector('input.fib-cb[value="0.75"]');
+                if (stopCb) { stopCb.checked = true; toggleGlow(stopCb); }
+            } else {
+                let stopCb = document.querySelector('input.e1-cb[value="0.25"]') || document.querySelector('input.fib-cb[value="0.25"]');
+                if (stopCb) { stopCb.checked = true; toggleGlow(stopCb); }
+            }
+            
+            if (document.getElementById('dual-entry-cb').checked) {
+                document.querySelectorAll('.e2-cb').forEach(cb => { cb.checked = false; toggleGlow(cb); });
+                if (direction === 'Upside') {
+                    let e2Entry = document.querySelector('input.e2-cb[value="1.2"]');
+                    let e2Stop = document.querySelector('input.e2-cb[value="1.0"]');
+                    let e2Target = document.querySelector('input.e2-cb[value="3.0"]');
+                    if(e2Entry) { e2Entry.checked = true; toggleGlow(e2Entry); }
+                    if(e2Stop) { e2Stop.checked = true; toggleGlow(e2Stop); }
+                    if(e2Target) { e2Target.checked = true; toggleGlow(e2Target); }
+                } else {
+                    let e2Entry = document.querySelector('input.e2-cb[value="-0.2"]');
+                    let e2Stop = document.querySelector('input.e2-cb[value="0.0"]');
+                    let e2Target = document.querySelector('input.e2-cb[value="-2.0"]');
+                    if(e2Entry) { e2Entry.checked = true; toggleGlow(e2Entry); }
+                    if(e2Stop) { e2Stop.checked = true; toggleGlow(e2Stop); }
+                    if(e2Target) { e2Target.checked = true; toggleGlow(e2Target); }
+                }
+            }
+            
+            handleResultChange();
+        }
+
+        function handleResultChange() {
+            const result = document.querySelector('input[name="result1"]:checked').value;
+            const direction = document.querySelector('input[name="direction"]:checked').value;
+            const isDual = document.getElementById('dual-entry-cb').checked;
+            
+            if (isDual) {
+                if (result === 'Loss') {
+                    document.querySelector('input[name="result2"][value="Loss"]').checked = true;
+                } else if (result === 'Break Even') {
+                    document.querySelector('input[name="result2"][value="Break Even"]').checked = true;
+                }
+            }
+            
+            if (result === 'Loss') {
+                if (direction === 'Upside') {
+                    let targetCb = document.querySelector('input.fib-cb[value="2.5"]');
+                    if (targetCb) { targetCb.checked = true; toggleGlow(targetCb); }
+                } else {
+                    let targetCb = document.querySelector('input.fib-cb[value="-1.5"]');
+                    if (targetCb) { targetCb.checked = true; toggleGlow(targetCb); }
+                }
+            }
+        }
+
+        function toggleGlow(cb) {
+            if(cb.checked) {
+                cb.parentElement.classList.add('checked');
+            } else {
+                cb.parentElement.classList.remove('checked');
+            }
+        }
+        
+        function handleStopLoss(changedCb) {
+            if (!changedCb.checked) {
+                toggleGlow(changedCb);
+                return;
+            }
+            
+            const direction = document.querySelector('input[name="direction"]:checked').value;
+            const isReentry = document.getElementById('reentry-cb').checked;
+            
+            if (direction === 'Upside') {
+                if (changedCb.value === '1.0' && !isReentry) {
+                    ['0.75', '0.5'].forEach(val => { let other = document.querySelector('input.fib-cb[value="' + val + '"]'); if(other){other.checked = false; toggleGlow(other);} });
+                } else if (changedCb.value === '0.75' && !isReentry) {
+                    ['1.0', '0.5'].forEach(val => { let other = document.querySelector('input.fib-cb[value="' + val + '"]'); if(other){other.checked = false; toggleGlow(other);} });
+                } else if (changedCb.value === '0.5' && !isReentry) {
+                    ['1.0', '0.75'].forEach(val => { let other = document.querySelector('input.fib-cb[value="' + val + '"]'); if(other){other.checked = false; toggleGlow(other);} });
+                }
+            } else {
+                if (changedCb.value === '0.0' && !isReentry) {
+                    ['0.25', '0.5'].forEach(val => { let other = document.querySelector('input.fib-cb[value="' + val + '"]'); if(other){other.checked = false; toggleGlow(other);} });
+                } else if (changedCb.value === '0.25' && !isReentry) {
+                    ['0.0', '0.5'].forEach(val => { let other = document.querySelector('input.fib-cb[value="' + val + '"]'); if(other){other.checked = false; toggleGlow(other);} });
+                } else if (changedCb.value === '0.5' && !isReentry) {
+                    ['0.0', '0.25'].forEach(val => { let other = document.querySelector('input.fib-cb[value="' + val + '"]'); if(other){other.checked = false; toggleGlow(other);} });
+                }
+            }
+            
+            toggleGlow(changedCb);
+        }
+
+        function handleTargetClick(changedCb) {
+            cancelHoverTimer(changedCb.parentElement);
+            
+            if (!changedCb.checked) {
+                toggleGlow(changedCb);
+                return;
+            }
+            
+            const direction = document.querySelector('input[name="direction"]:checked').value;
+            const isE1 = changedCb.classList.contains('e1-cb');
+            let targetVals = direction === 'Upside' ? ['3.0', '2.5', '2.25'] : ['-1.25', '-1.5', '-2.0'];
+            let cls = isE1 ? '.e1-cb' : '.e2-cb';
+            
+            targetVals.forEach(val => {
+                if (val !== changedCb.value) {
+                    let other = document.querySelector(`input${cls}[value="${val}"]`);
+                    if (other && other.checked) {
+                        other.checked = false;
+                        toggleGlow(other);
+                    }
+                }
+            });
+            
+            toggleGlow(changedCb);
+        }
+
+        let hoverTimers = new Map();
+        function startHoverTimer(label) {
+            let timer = setTimeout(() => {
+                let cb = label.querySelector('input.fib-cb');
+                if (cb) {
+                    cb.checked = !cb.checked;
+                    toggleGlow(cb);
+                }
+            }, 1000);
+            hoverTimers.set(label, timer);
+        }
+        
+        function cancelHoverTimer(label) {
+            if (hoverTimers.has(label)) {
+                clearTimeout(hoverTimers.get(label));
+                hoverTimers.delete(label);
+            }
+        }
+
+        function handleReentryChange() {
+            const cb = document.getElementById('reentry-cb');
+            const btn = document.getElementById('reentry-btn');
+            const direction = document.querySelector('input[name="direction"]:checked').value;
+            
+            const upStopDesc = document.querySelector('input.fib-cb[value="0.75"]').parentElement.querySelector('.fib-desc');
+            const downStopDesc = document.querySelector('input.fib-cb[value="0.25"]').parentElement.querySelector('.fib-desc');
+            
+            if(cb.checked) {
+                btn.classList.add('active');
+                upStopDesc.textContent = "Shifted Entry";
+                downStopDesc.textContent = "Shifted Entry";
+                
+                document.querySelectorAll('.fib-cb').forEach(c => {
+                    c.checked = false; toggleGlow(c);
+                });
+                
+                const upLevels = document.querySelectorAll('.fib-level[data-side="up"]');
+                const downLevels = document.querySelectorAll('.fib-level[data-side="down"]');
+                const showpiece1 = document.getElementById('showpiece-1');
+                const showpiece0 = document.getElementById('showpiece-0');
+                
+                if(direction === 'Upside') {
+                    upLevels.forEach(el => el.classList.remove('disabled'));
+                    downLevels.forEach(el => el.classList.add('disabled'));
+                    showpiece1.classList.add('checked');
+                    showpiece0.classList.remove('checked');
+                    
+                    let entry = document.querySelector('input.fib-cb[value="0.75"]');
+                    let stop = document.querySelector('input.fib-cb[value="0.5"]');
+                    if(entry) { entry.checked = true; toggleGlow(entry); }
+                    if(stop) { stop.checked = true; toggleGlow(stop); }
+                } else {
+                    downLevels.forEach(el => el.classList.remove('disabled'));
+                    upLevels.forEach(el => el.classList.add('disabled'));
+                    showpiece1.classList.remove('checked');
+                    showpiece0.classList.add('checked');
+                    
+                    let entry = document.querySelector('input.fib-cb[value="0.25"]');
+                    let stop = document.querySelector('input.fib-cb[value="0.5"]');
+                    if(entry) { entry.checked = true; toggleGlow(entry); }
+                    if(stop) { stop.checked = true; toggleGlow(stop); }
+                }
+            } else {
+                upStopDesc.textContent = "Upside Stop";
+                downStopDesc.textContent = "Downside Stop";
+                btn.classList.remove('active');
+                handleDirectionChange();
+            }
+        }
+
+        function renderLogs() {
+            const tbody = document.getElementById('log-table-body');
+            tbody.innerHTML = '';
+            
+            let currentId = 1;
+            let currentBalance = 1000;
+            let currentRisk = 100;
+            
+            tradeLogs.forEach((trade, index) => {
+                if (index > 0) {
+                    if (tradeLogs[index].dualGroupId && tradeLogs[index].dualGroupId === tradeLogs[index-1].dualGroupId) {
+                        // Same setup
+                    } else if (trade.isReentry) {
+                        currentId = Math.floor(currentId) + 0.5;
+                    } else {
+                        currentId = Math.floor(currentId) + 1;
+                    }
+                } else {
+                    currentId = trade.isReentry ? 1.5 : 1;
+                }
+                
+                let displayId = currentId;
+                if (trade.isDualPart === 1) displayId = currentId + " (E1)";
+                if (trade.isDualPart === 2) displayId = currentId + " (E2)";
+                
+                const userRiskPct = parseFloat(document.getElementById('risk-input').value) || 5;
+                if (trade.isDualPart === 2 && index > 0) {
+                    currentRisk = tradeLogs[index - 1].riskAmount;
+                } else {
+                    currentRisk = currentBalance * (userRiskPct / 100);
+                    if (trade.isDualPart === 1) {
+                        currentRisk = currentRisk / 2;
+                    }
+                }
+                
+                let pnl = 0;
+                if (trade.result === 'Win' && trade.rr !== "N/A") {
+                    let rrVal = parseFloat(trade.rr.split(':')[1]);
+                    pnl = currentRisk * rrVal;
+                } else if (trade.result === 'Loss') {
+                    pnl = -currentRisk;
+                }
+                
+                currentBalance += pnl;
+                
+                trade.id = currentId;
+                trade.riskAmount = currentRisk;
+                trade.pnlAmount = pnl;
+                trade.balanceAfter = currentBalance;
+                
+                const tr = document.createElement('tr');
+                let resultClass = trade.result === 'Win' ? 'win' : (trade.result === 'Loss' ? 'loss' : '');
+                let reentryBadge = trade.isReentry ? '<span class="badge">RE-ENTRY</span>' : '';
+                let dualBadge = trade.isDualPart ? '<span class="badge-dual">DUAL</span>' : '';
+                
+                let rrDisplay = trade.rr !== "N/A" ? "<span class='rr-badge'>" + trade.rr + "</span>" : "<span style='color:#555'>N/A</span>";
+                
+                let pnlColor = pnl > 0 ? "money-green" : (pnl < 0 ? "money-red" : "");
+                let pnlText = pnl > 0 ? "+$" + pnl.toFixed(2) : (pnl < 0 ? "-$" + Math.abs(pnl).toFixed(2) : "$0.00");
+                
+                let actionBtn = trade.isDualPart === 2 ? '' : "<button class='delete-btn' onclick='deleteTrade(" + index + ")'>Undo</button>";
+                
+                tr.innerHTML = "<td>" + displayId + "</td>" +
+                               "<td>" + trade.pair + "</td>" +
+                               "<td class='" + resultClass + "'>" + trade.direction + " " + trade.result + " " + reentryBadge + " " + dualBadge + "</td>" +
+                               "<td>" + rrDisplay + "</td>" +
+                               "<td>$" + currentRisk.toFixed(2) + "</td>" +
+                               "<td class='" + pnlColor + "'>" + pnlText + "</td>" +
+                               "<td class='" + (currentBalance > 1000 ? "money-green" : (currentBalance < 1000 ? "money-red" : "")) + "'>$" + currentBalance.toFixed(2) + "</td>" +
+                               "<td>" + actionBtn + "</td>";
+                tbody.appendChild(tr);
+            });
+            
+            const logContainer = document.querySelector('.log-container');
+            logContainer.scrollTop = logContainer.scrollHeight;
+        }
+
+        function submitTrade() {
+            const direction = document.querySelector('input[name="direction"]:checked').value;
+            const isReentry = document.getElementById('reentry-cb').checked;
+            const isDual = document.getElementById('dual-entry-cb').checked;
+            const pairVal = document.getElementById('pair-input').value || "UNKNOWN";
+            
+            let e1Vals = Array.from(document.querySelectorAll(isDual ? '.e1-cb:checked' : '.fib-cb:checked')).map(cb => parseFloat(cb.value));
+            let e2Vals = isDual ? Array.from(document.querySelectorAll('.e2-cb:checked')).map(cb => parseFloat(cb.value)) : [];
+            
+            let hasEntry = false, hasStop = false, hasTarget = false;
+            let entryVal = 0, stopVal = 0;
+            let rrString = "N/A", rrString2 = "N/A";
+            
+            let possibleEntries = isReentry ? (direction === 'Upside' ? [0.75] : [0.25]) : (direction === 'Upside' ? [1.2] : [-0.2]);
+            let e1Entry = e1Vals.find(v => possibleEntries.includes(v));
+            if (e1Entry !== undefined) {
+                hasEntry = true;
+                entryVal = e1Entry;
+                let e1Targets = e1Vals.filter(v => direction === 'Upside' ? v > e1Entry : v < e1Entry);
+                let e1Stops = e1Vals.filter(v => direction === 'Upside' ? v < e1Entry : v > e1Entry);
+                
+                if (e1Stops.length > 0) { hasStop = true; stopVal = direction === 'Upside' ? Math.max(...e1Stops) : Math.min(...e1Stops); }
+                if (e1Targets.length > 0) {
+                    hasTarget = true;
+                    let avgTarget = e1Targets.reduce((a,b) => a+b, 0) / e1Targets.length;
+                    let risk = Math.abs(e1Entry - stopVal);
+                    if (risk > 0) rrString = "1:" + (Math.abs(avgTarget - e1Entry) / risk).toFixed(2);
+                }
+            }
+
+            if (isDual) {
+                let e2Entry = e2Vals.find(v => possibleEntries.includes(v)) || e1Entry;
+                if (e2Entry !== undefined) {
+                    let e2Targets = e2Vals.filter(v => direction === 'Upside' ? v > e2Entry : v < e2Entry);
+                    let e2Stops = e2Vals.filter(v => direction === 'Upside' ? v < e2Entry : v > e2Entry);
+                    
+                    // If user didn't explicitly check E2 targets/stops, fallback to strict math
+                    if (e2Targets.length > 0 && e2Stops.length > 0) {
+                        let e2StopVal = direction === 'Upside' ? Math.max(...e2Stops) : Math.min(...e2Stops);
+                        let avgTarget2 = e2Targets.reduce((a,b) => a+b, 0) / e2Targets.length;
+                        let risk2 = Math.abs(e2Entry - e2StopVal);
+                        if (risk2 > 0) rrString2 = "1:" + (Math.abs(avgTarget2 - e2Entry) / risk2).toFixed(2);
+                    } else {
+                        // Strict fallback
+                        if (!isReentry) {
+                            rrString = "1:2.89";
+                            rrString2 = "1:6.50";
+                        } else {
+                            let t1 = direction === 'Upside' ? 2.5 : -1.5;
+                            let rE = Math.abs(entryVal - stopVal);
+                            if (rE > 0) {
+                                rrString = "1:" + (Math.abs(t1 - entryVal) / rE).toFixed(2);
+                                rrString2 = rrString;
+                            }
+                        }
+                    }
+                }
+            }
+
+            const res1 = document.querySelector('input[name="result1"]:checked').value;
+
+            if (!hasEntry || !hasStop) {
+                alert("STRICT ERROR: You have not tracked the trade correctly. Select your Entry and Stop Loss.");
+                return;
+            }
+            if (res1 === 'Win' && !hasTarget) {
+                alert("STRICT ERROR: You must select a Target for a Winning trade to calculate R:R.");
+                return;
+            }
+
+            // Build path visually
+            let path = [];
+            document.querySelectorAll(isDual ? '.e1-cb:checked, .e2-cb:checked' : '.fib-cb:checked').forEach(cb => {
+                let color = window.getComputedStyle(cb.parentElement).getPropertyValue('border-color');
+                let pfx = isDual ? (cb.classList.contains('e1-cb') ? 'E1:' : 'E2:') : '';
+                path.push(`<span style="color:${color}; font-weight:bold;">${pfx}${cb.value}</span>`);
+            });
+            // res1 is already declared above
+            if (isDual) {
+                const res2 = document.querySelector('input[name="result2"]:checked').value;
+                let dualGroupId = Date.now();
+                
+                tradeLogs.push({
+                    pair: pairVal,
+                    direction: direction,
+                    result: res1,
+                    rr: rrString,
+                    path: path,
+                    isReentry: isReentry,
+                    isDualPart: 1,
+                    dualGroupId: dualGroupId
+                });
+                
+                tradeLogs.push({
+                    pair: pairVal,
+                    direction: direction,
+                    result: res2,
+                    rr: rrString2,
+                    path: path,
+                    isReentry: isReentry,
+                    isDualPart: 2,
+                    dualGroupId: dualGroupId
+                });
+            } else {
+                tradeLogs.push({
+                    pair: pairVal,
+                    direction: direction,
+                    result: res1,
+                    rr: rrString,
+                    path: path,
+                    isReentry: isReentry
+                });
+            }
+
+            localStorage.setItem('neonFibTrades', JSON.stringify(tradeLogs));
+            
+            document.querySelectorAll('.fib-cb').forEach(cb => {
+                cb.checked = false;
+                cb.parentElement.classList.remove('checked');
+            });
+            document.getElementById('reentry-cb').checked = false;
+            document.getElementById('reentry-btn').classList.remove('active');
+            
+            const upStopDesc = document.querySelector('input.fib-cb[value="0.75"]').parentElement.querySelector('.fib-desc');
+            const downStopDesc = document.querySelector('input.fib-cb[value="0.25"]').parentElement.querySelector('.fib-desc');
+            upStopDesc.textContent = "Upside Stop";
+            downStopDesc.textContent = "Downside Stop";
+            
+            handleDirectionChange();
+            renderLogs();
+        }
+
+        function deleteTrade(index) {
+            if (tradeLogs[index].isDualPart) {
+                let groupId = tradeLogs[index].dualGroupId;
+                tradeLogs = tradeLogs.filter(t => t.dualGroupId !== groupId);
+            } else {
+                tradeLogs.splice(index, 1);
+            }
+            localStorage.setItem('neonFibTrades', JSON.stringify(tradeLogs));
+            renderLogs();
+        }
+        
+        function clearTrades() {
+            if (confirm("STRICT WARNING: This will wipe your entire journal. Are you sure?")) {
+                tradeLogs = [];
+                localStorage.removeItem('neonFibTrades');
+                renderLogs();
+            }
+        }
+        
+        function exportData() {
+            if (tradeLogs.length === 0) return;
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(tradeLogs, null, 2));
+            const downloadAnchorNode = document.createElement('a');
+            downloadAnchorNode.setAttribute("href", dataStr);
+            const date = new Date().toISOString().split('T')[0];
+            downloadAnchorNode.setAttribute("download", "strict_backtest_data_" + date + ".json");
+            document.body.appendChild(downloadAnchorNode);
+            downloadAnchorNode.click();
+            downloadAnchorNode.remove();
+        }
+
+        renderLogs();
+    </script>
+</body>
+</html>
